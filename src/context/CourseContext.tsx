@@ -79,20 +79,24 @@ const COMPLETED_LESSONS_STORAGE_KEY = 'aivalytics_lms_completed_lessons_v3';
 export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>(flagshipCoursesList);
-  const [modules, setModules] = useState<CurriculumModule[]>(() => {
+  const [modules, setModules] = useState<CurriculumModule[]>(initialCurriculumModules);
+
+  // Hydrate cached modules from localStorage on client mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(MODULES_STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setModules(parsed);
+          }
         }
       } catch (err) {
         console.error('Failed to load cached modules:', err);
       }
     }
-    return initialCurriculumModules;
-  });
+  }, []);
 
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
 

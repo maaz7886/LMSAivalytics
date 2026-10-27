@@ -97,9 +97,9 @@ export const RecentSessionsTable: React.FC<RecentSessionsTableProps> = ({ sessio
                   {/* Status Badge */}
                   <td className="py-4 px-6">
                     {isLive ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#5ae4a8] text-[#111614] shadow-xs">
+                      <span suppressHydrationWarning className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#5ae4a8] text-[#111614] shadow-xs">
                         <Clock className="w-3 h-3 text-[#111614]" />
-                        <span>Live Now{remainingMinutesText}</span>
+                        <span suppressHydrationWarning>Live Now{remainingMinutesText}</span>
                       </span>
                     ) : isUpcoming ? (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">

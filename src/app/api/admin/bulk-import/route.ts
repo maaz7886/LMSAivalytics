@@ -61,131 +61,147 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const BATCH_SIZE = 10;
     const results = [];
 
-    for (const student of students) {
-      const email = student.email.toLowerCase().trim();
-      const fullName = student.fullName?.trim() || 'Learner';
-      const password = student.password?.trim() || 'password123';
-      const term = student.term || 'Fall 2026';
-      const status = student.status === 'Pending' ? 'Pending' : 'Active';
+    // Process students in batches of 10 concurrently to prevent 504 timeouts on serverless runtimes
+    for (let i = 0; i < students.length; i += BATCH_SIZE) {
+      const chunk = students.slice(i, i + BATCH_SIZE);
 
-      // Determine course
-      const targetCode = (student.courseCode || 'AINPM-101').toUpperCase();
-      const course = courseMap.get(targetCode) || flagshipCourse;
+      const batchResults = await Promise.all(
+        chunk.map(async (student) => {
+          const email = student.email.toLowerCase().trim();
+          const fullName = student.fullName?.trim() || 'Learner';
+          const password = student.password?.trim() || 'password123';
+          const term = student.term || 'Fall 2026';
+          const status = student.status === 'Pending' ? 'Pending' : 'Active';
 
-      let authUserId: string | null = null;
+          // Determine course
+          const targetCode = (student.courseCode || 'AINPM-101').toUpperCase();
+          const course = courseMap.get(targetCode) || flagshipCourse;
 
-      // 2. Register / Update user in Supabase Auth (auth.users)
-      if (supabaseAdmin) {
-        try {
-          const existingAuth = authUsersList.find(
-            (u) => u.email?.toLowerCase().trim() === email
-          );
+          let authUserId: string | null = null;
 
-          if (existingAuth) {
-            authUserId = existingAuth.id;
-            await supabaseAdmin.auth.admin.updateUserById(authUserId, {
-              password,
-              email_confirm: true,
-              user_metadata: { full_name: fullName },
-            });
-          } else {
-            const { data: createdAuth, error: createAuthError } =
-              await supabaseAdmin.auth.admin.createUser({
-                email,
-                password,
-                email_confirm: true,
-                user_metadata: { full_name: fullName },
-              });
-
-            if (!createAuthError && createdAuth?.user) {
-              authUserId = createdAuth.user.id;
-            } else if (createAuthError?.message?.includes('already been registered')) {
-              // User already in auth.users, try to find
-              const { data: singleList } = await supabaseAdmin.auth.admin.listUsers();
-              const found = singleList?.users.find(
+          // 2. Register / Update user in Supabase Auth (auth.users)
+          if (supabaseAdmin) {
+            try {
+              const existingAuth = authUsersList.find(
                 (u) => u.email?.toLowerCase().trim() === email
               );
-              if (found) {
-                authUserId = found.id;
+
+              if (existingAuth) {
+                authUserId = existingAuth.id;
                 await supabaseAdmin.auth.admin.updateUserById(authUserId, {
                   password,
                   email_confirm: true,
                   user_metadata: { full_name: fullName },
                 });
+              } else {
+                const { data: createdAuth, error: createAuthError } =
+                  await supabaseAdmin.auth.admin.createUser({
+                    email,
+                    password,
+                    email_confirm: true,
+                    user_metadata: { full_name: fullName },
+                  });
+
+                if (!createAuthError && createdAuth?.user) {
+                  authUserId = createdAuth.user.id;
+                } else if (createAuthError?.message?.includes('already been registered')) {
+                  // User already in auth.users, try to find
+                  const { data: singleList } = await supabaseAdmin.auth.admin.listUsers();
+                  const found = singleList?.users.find(
+                    (u) => u.email?.toLowerCase().trim() === email
+                  );
+                  if (found) {
+                    authUserId = found.id;
+                    await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+                      password,
+                      email_confirm: true,
+                      user_metadata: { full_name: fullName },
+                    });
+                  }
+                } else {
+                  console.error(`Failed to create auth user for ${email}:`, createAuthError?.message);
+                }
               }
-            } else {
-              console.error(`Failed to create auth user for ${email}:`, createAuthError?.message);
+            } catch (authErr) {
+              console.error(`Error in Supabase Auth for ${email}:`, authErr);
             }
           }
-        } catch (authErr) {
-          console.error(`Error in Supabase Auth for ${email}:`, authErr);
+
+          // 3. Upsert User in PostgreSQL (public.User)
+          const existingUser = await prisma.user.findUnique({
+            where: { email },
+          });
+
+          let dbUserId = existingUser?.id;
+
+          if (existingUser) {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: {
+                fullName,
+                role: 'LEARNER',
+                term,
+                password,
+              },
+            });
+          } else {
+            const createdUser = await prisma.user.create({
+              data: {
+                ...(authUserId ? { id: authUserId } : {}),
+                email,
+                fullName,
+                role: 'LEARNER',
+                term,
+                password,
+              },
+            });
+            dbUserId = createdUser.id;
+          }
+
+          // 4. Upsert Enrollment in PostgreSQL (public.Enrollment)
+          if (dbUserId && course) {
+            const enrollment = await prisma.enrollment.upsert({
+              where: {
+                userId_courseId: {
+                  userId: dbUserId,
+                  courseId: course.id,
+                },
+              },
+              update: {
+                status,
+              },
+              create: {
+                userId: dbUserId,
+                courseId: course.id,
+                status,
+                progress: 0.0,
+              },
+            });
+
+            return {
+              id: dbUserId,
+              enrollmentId: enrollment.id,
+              fullName,
+              email,
+              password,
+              courseCode: course.code,
+              courseName: course.title,
+              term,
+              status,
+            };
+          }
+
+          return null;
+        })
+      );
+
+      for (const result of batchResults) {
+        if (result) {
+          results.push(result);
         }
-      }
-
-      // 3. Upsert User in PostgreSQL (public.User)
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
-
-      let dbUserId = existingUser?.id;
-
-      if (existingUser) {
-        await prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            fullName,
-            role: 'LEARNER',
-            term,
-            password,
-          },
-        });
-      } else {
-        const createdUser = await prisma.user.create({
-          data: {
-            ...(authUserId ? { id: authUserId } : {}),
-            email,
-            fullName,
-            role: 'LEARNER',
-            term,
-            password,
-          },
-        });
-        dbUserId = createdUser.id;
-      }
-
-      // 4. Upsert Enrollment in PostgreSQL (public.Enrollment)
-      if (dbUserId && course) {
-        const enrollment = await prisma.enrollment.upsert({
-          where: {
-            userId_courseId: {
-              userId: dbUserId,
-              courseId: course.id,
-            },
-          },
-          update: {
-            status,
-          },
-          create: {
-            userId: dbUserId,
-            courseId: course.id,
-            status,
-            progress: 0.0,
-          },
-        });
-
-        results.push({
-          id: dbUserId,
-          enrollmentId: enrollment.id,
-          fullName,
-          email,
-          password,
-          courseCode: course.code,
-          courseName: course.title,
-          term,
-          status,
-        });
       }
     }
 

@@ -89,19 +89,8 @@ async function resolveUserFromDb(authUser: {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Initialize from localStorage cache for instant render (avoids flash), but always
-  // re-validate against Supabase Auth on mount.
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('aivalytics_active_user');
-        if (saved) return JSON.parse(saved);
-      } catch (err) {
-        console.error('Error loading saved user', err);
-      }
-    }
-    return null; // No mock fallback — unauthenticated users are null
-  });
+  // Start with null on both server and client to guarantee identical initial SSR render tree
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
@@ -117,6 +106,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   useEffect(() => {
+    // Immediately read cached user from localStorage on client mount
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('aivalytics_active_user');
+        if (saved) {
+          setUser(JSON.parse(saved));
+        }
+      } catch (err) {
+        console.error('Error loading saved user from localStorage', err);
+      }
+    }
+
     async function initSupabaseSession() {
       if (!isSupabaseConfigured || !supabase) {
         setIsLoading(false);

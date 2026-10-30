@@ -19,7 +19,7 @@ export const initialCurriculumModules: CurriculumModule[] = [
         title: 'AI Fundamentals & Reasoning Architecture',
         description: 'Understand how modern AI actually works: what LLMs actually are, tokens & context windows, reasoning models, and choosing the right model.',
         duration: '45m',
-        videoUrl: 'https://example.com/videos/ai-fundamentals',
+        videoUrl: 'https://www.youtube.com/embed/_Xe2JAoMwIA',
         type: 'video',
         isCompleted: false,
         order: 1,

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useCourses } from '@/context/CourseContext';
+import { getVideoEmbedInfo } from '@/lib/videoUtils';
 import {
   ArrowLeft,
   Play,
@@ -21,6 +22,9 @@ import {
   Layers,
   Send,
   BookOpen,
+  Video,
+  Edit2,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function CourseDetailPage() {
@@ -52,17 +56,26 @@ export default function CourseDetailPage() {
   // Sync with search param if changed
   useEffect(() => {
     const lessonParam = searchParams.get('lesson');
-    if (lessonParam && allSubmodules.some((s) => s.id === lessonParam)) {
-      setActiveLessonId(lessonParam);
+    if (lessonParam) {
+      const matched = allSubmodules.find(
+        (s) => s.id === lessonParam || s.subpartCode === lessonParam
+      );
+      if (matched) {
+        setActiveLessonId(matched.id);
+      }
     }
   }, [searchParams, allSubmodules]);
 
   const currentLesson =
-    allSubmodules.find((l) => l.id === activeLessonId) || allSubmodules[0];
+    allSubmodules.find(
+      (l) => l.id === activeLessonId || l.subpartCode === activeLessonId
+    ) || allSubmodules[0];
 
   const currentParentModule = modules.find((m) =>
     m.submodules.some((s) => s.id === currentLesson?.id)
   );
+
+  const videoEmbedInfo = getVideoEmbedInfo(currentLesson?.videoUrl);
 
   const isCompleted = currentLesson ? isLessonCompleted(currentLesson.id) : false;
 
@@ -147,55 +160,133 @@ export default function CourseDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Video & Content Viewer (2 Cols) */}
           <div className="lg:col-span-2 space-y-4">
-            {/* High-Res Video Player */}
-            <div className="bg-[#121614] rounded-2xl aspect-video w-full overflow-hidden relative flex flex-col justify-between p-6 shadow-xl border border-gray-800 text-white">
-              {/* Top Video Header */}
-              <div className="flex items-center justify-between text-xs text-gray-300">
-                <span className="bg-black/60 px-3 py-1 rounded-full backdrop-blur-xs font-medium border border-white/10">
-                  Part {currentLesson?.subpartCode}: {currentLesson?.title}
-                </span>
-                <span className="bg-[#3ECE92]/20 text-[#3ECE92] border border-[#3ECE92]/30 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider font-mono">
-                  HD 1080p • {currentLesson?.duration}
-                </span>
-              </div>
-
-              {/* Center Play Button Overlay */}
-              <div className="flex items-center justify-center">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="w-16 h-16 rounded-full bg-[#3ECE92] hover:bg-[#34be83] text-[#111614] flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-7 h-7 fill-current" />
+            {/* High-Res Video Player / Embedded Stream */}
+            <div className="space-y-2">
+              <div className="bg-[#121614] rounded-2xl aspect-video w-full overflow-hidden relative shadow-xl border border-gray-800 text-white flex flex-col justify-between">
+                {videoEmbedInfo.isValid ? (
+                  videoEmbedInfo.provider === 'direct' ? (
+                    <video
+                      key={videoEmbedInfo.embedUrl}
+                      src={videoEmbedInfo.embedUrl}
+                      controls
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <Play className="w-7 h-7 fill-current ml-1" />
-                  )}
-                </button>
+                    <iframe
+                      key={videoEmbedInfo.embedUrl}
+                      src={`${videoEmbedInfo.embedUrl}${
+                        videoEmbedInfo.embedUrl.includes('?') ? '&' : '?'
+                      }rel=0&modestbranding=1&enablejsapi=1`}
+                      title={currentLesson?.title || 'Lesson Video'}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  )
+                ) : (
+                  <div className="p-6 h-full flex flex-col justify-between">
+                    {/* Top Video Header */}
+                    <div className="flex items-center justify-between text-xs text-gray-300">
+                      <span className="bg-black/60 px-3 py-1 rounded-full backdrop-blur-xs font-medium border border-white/10">
+                        Part {currentLesson?.subpartCode}: {currentLesson?.title}
+                      </span>
+                      <span className="bg-[#3ECE92]/20 text-[#3ECE92] border border-[#3ECE92]/30 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider font-mono">
+                        {currentLesson?.duration || '45m'}
+                      </span>
+                    </div>
+
+                    {/* Center Notice */}
+                    <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-3 my-auto">
+                      <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#3ECE92] shadow-inner">
+                        <Video className="w-7 h-7" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-sm sm:text-base font-bold text-white">
+                          Lecture Stream In Production
+                        </h3>
+                        <p className="text-xs text-gray-400 leading-relaxed">
+                          This syllabus unit does not have an active YouTube stream linked yet. Faculty can update the Video URL in the Curriculum Manager.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => router.push('/courses')}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all active:scale-95"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 text-[#3ECE92]" />
+                        <span>Curriculum Editor</span>
+                      </button>
+                    </div>
+
+                    {/* Bottom Controls Bar */}
+                    <div className="flex items-center justify-between text-xs text-gray-400 font-mono">
+                      <span>Module {currentParentModule?.moduleNumber || 1} • {currentLesson?.duration || '45m'}</span>
+                      <button
+                        onClick={handleToggleComplete}
+                        className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
+                          isCompleted
+                            ? 'bg-[#3ECE92] text-[#111614] font-semibold'
+                            : 'bg-white/10 hover:bg-white/20 text-white'
+                        }`}
+                      >
+                        {isCompleted ? '✓ Completed' : 'Mark Complete'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Bottom Controls Bar */}
-              <div className="space-y-2">
-                {/* Progress bar */}
-                <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden cursor-pointer">
-                  <div className="bg-[#3ECE92] h-full w-2/5 rounded-full shadow-[0_0_8px_rgba(62,206,146,0.6)]" />
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-400 font-mono">
-                  <span>18:40 / {currentLesson?.duration}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] hover:text-white cursor-pointer">1.0x</span>
+              {/* Video Meta & Actions Bar */}
+              {videoEmbedInfo.isValid && (
+                <div className="bg-white rounded-xl border border-[#eaedf0] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                      <Video className="w-3 h-3 text-rose-600" />
+                      {videoEmbedInfo.provider === 'youtube'
+                        ? 'YouTube Embedded HD'
+                        : videoEmbedInfo.provider.toUpperCase()}
+                    </span>
+                    <span className="text-gray-500 font-mono text-[11px] hidden sm:inline">
+                      • {currentLesson?.duration || '45m'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {videoEmbedInfo.videoId && videoEmbedInfo.provider === 'youtube' && (
+                      <a
+                        href={`https://www.youtube.com/watch?v=${videoEmbedInfo.videoId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-gray-500 hover:text-gray-800 transition-colors"
+                        title="Watch directly on YouTube"
+                      >
+                        <span>Open in YouTube</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+
                     <button
                       onClick={handleToggleComplete}
-                      className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                         isCompleted
-                          ? 'bg-[#3ECE92] text-[#111614] font-semibold'
-                          : 'bg-white/10 hover:bg-white/20 text-white'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-[#121614] text-white hover:bg-black'
                       }`}
                     >
-                      {isCompleted ? '✓ Completed' : 'Mark Complete'}
+                      {isCompleted ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>Completed</span>
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="w-3.5 h-3.5" />
+                          <span>Mark Complete</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Content Tabs (Overview, Notes, Resources, Q&A) */}

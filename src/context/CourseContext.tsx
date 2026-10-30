@@ -9,6 +9,7 @@ import {
 } from '@/data/flagshipCourseData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { toYouTubeEmbedUrl } from '@/lib/videoUtils';
 
 interface AdminAddModuleParams {
   courseId?: string;
@@ -89,7 +90,15 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setModules(parsed);
+            // Automatically normalize any stored YouTube links to embed format
+            const sanitized = parsed.map((m: CurriculumModule) => ({
+              ...m,
+              submodules: (m.submodules || []).map((s: CourseSubmodule) => ({
+                ...s,
+                videoUrl: s.videoUrl ? (toYouTubeEmbedUrl(s.videoUrl) || s.videoUrl) : s.videoUrl,
+              })),
+            }));
+            setModules(sanitized);
           }
         }
       } catch (err) {
@@ -174,7 +183,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               title: l.title,
               description: l.description || '',
               duration: `${l.durationMin || 45}m`,
-              videoUrl: l.videoUrl || 'https://example.com/videos/module-1-lesson',
+              videoUrl: (l.videoUrl && toYouTubeEmbedUrl(l.videoUrl)) || l.videoUrl || 'https://example.com/videos/module-1-lesson',
               type: l.type || 'video',
               isCompleted: false, // Computed below with user progress
               order: l.order || lIdx + 1,
@@ -445,6 +454,9 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const currentSubCount = (targetModule?.submodules.length || 0) + 1;
     const tempId = `sub_${Date.now()}`;
     const durationMin = parseInt(duration) || 45;
+    const normalizedVideoUrl = videoUrl?.trim()
+      ? toYouTubeEmbedUrl(videoUrl.trim()) || videoUrl.trim()
+      : '';
 
     const newSubmodule: CourseSubmodule = {
       id: tempId,
@@ -453,7 +465,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       title: title.trim(),
       description: description.trim(),
       duration: `${durationMin}m`,
-      videoUrl: videoUrl?.trim() || 'https://example.com/videos/lecture-placeholder',
+      videoUrl: normalizedVideoUrl || 'https://example.com/videos/lecture-placeholder',
       type,
       isCompleted: false,
       order: currentSubCount,
@@ -482,7 +494,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             title: title.trim(),
             description: description.trim(),
             durationMin,
-            videoUrl: videoUrl?.trim() || 'https://example.com/videos/lecture-placeholder',
+            videoUrl: normalizedVideoUrl || 'https://example.com/videos/lecture-placeholder',
             type,
             order: currentSubCount,
           })
@@ -524,6 +536,10 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     takeaways,
   }: AdminEditSubmoduleParams) => {
     const durationMin = duration ? parseInt(duration) || 45 : undefined;
+    const normalizedVideoUrl =
+      videoUrl !== undefined
+        ? (videoUrl.trim() ? toYouTubeEmbedUrl(videoUrl.trim()) || videoUrl.trim() : '')
+        : undefined;
 
     setModules((prev) =>
       prev.map((m) => {
@@ -539,7 +555,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               title: title.trim(),
               description: description.trim(),
               duration: duration ? duration.trim() : s.duration,
-              videoUrl: videoUrl ? videoUrl.trim() : s.videoUrl,
+              videoUrl: normalizedVideoUrl !== undefined ? normalizedVideoUrl : s.videoUrl,
               type: type || s.type,
               takeaways: takeaways || s.takeaways,
             };
@@ -555,7 +571,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           description: description.trim(),
         };
         if (durationMin !== undefined) updatePayload.durationMin = durationMin;
-        if (videoUrl !== undefined) updatePayload.videoUrl = videoUrl.trim();
+        if (normalizedVideoUrl !== undefined) updatePayload.videoUrl = normalizedVideoUrl;
         if (type !== undefined) updatePayload.type = type;
 
         await supabase.from('Lesson').update(updatePayload).eq('id', submoduleId);

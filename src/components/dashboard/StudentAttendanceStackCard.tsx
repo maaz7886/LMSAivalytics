@@ -241,24 +241,28 @@ export const StudentAttendanceStackCard: React.FC<StudentAttendanceStackCardProp
 
   // Reflection modal state
   const [selectedSessionForReflection, setSelectedSessionForReflection] = useState<SessionItem | null>(null);
-  const [reflections, setReflections] = useState<Record<string, StudentReflection>>(() => {
+  const [reflections, setReflections] = useState<Record<string, StudentReflection>>({});
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Load reflections on mount or when studentEmail changes
+  useEffect(() => {
     if (typeof window !== 'undefined' && studentEmail) {
       try {
         const key = getReflectionStorageKey(studentEmail);
         const saved = localStorage.getItem(key);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          setReflections(JSON.parse(saved));
+        }
       } catch (err) {
         console.error('Failed to load reflections', err);
       }
     }
-    return {};
-  });
-
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  }, [studentEmail]);
 
   // Save reflections to localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined' && studentEmail) {
+    if (typeof window !== 'undefined' && studentEmail && Object.keys(reflections).length > 0) {
       try {
         const key = getReflectionStorageKey(studentEmail);
         localStorage.setItem(key, JSON.stringify(reflections));

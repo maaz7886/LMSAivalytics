@@ -20,11 +20,13 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { isCollapsed } = useSidebar();
   const { isAuthenticated, isLoading } = useAuth();
 
+  const isAuthRoute = pathname === '/login' || pathname === '/register';
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !isAuthRoute) {
       router.replace('/login');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router, pathname, isAuthRoute]);
 
   if (isLoading) {
     return (
@@ -37,6 +39,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         </div>
       </div>
     );
+  }
+
+  if (isAuthRoute) {
+    return <>{children}</>;
   }
 
   if (!isAuthenticated) {

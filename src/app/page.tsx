@@ -246,7 +246,10 @@ export default function DashboardPage() {
                       {activeLiveSession.course}
                     </span>
                     {activeLiveSession.expiresAt && (
-                      <span className="text-xs font-mono text-[#3ECE92] font-semibold bg-[#3ECE92]/10 px-2.5 py-0.5 rounded-full">
+                      <span
+                        suppressHydrationWarning
+                        className="text-xs font-mono text-[#3ECE92] font-semibold bg-[#3ECE92]/10 px-2.5 py-0.5 rounded-full"
+                      >
                         Ends in {Math.max(1, Math.round((parseDbTimestamp(activeLiveSession.expiresAt) - Date.now()) / 60000))}m
                       </span>
                     )}

@@ -82,35 +82,37 @@ const SUBMISSIONS_STORAGE_KEY = 'aivalytics_lms_project_submissions_v2';
 export const ProjectSubmissionsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [modules, setModules] = useState<ProjectModule[]>(() => {
+  const [modules, setModules] = useState<ProjectModule[]>(initialProjectModules);
+  const [submissions, setSubmissions] = useState<StudentProjectSubmission[]>([]);
+
+  // Hydrate from localStorage on client mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(MODULES_STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setModules(parsed);
+          }
         }
       } catch (err) {
         console.error('Failed to load cached project modules', err);
       }
-    }
-    return initialProjectModules;
-  });
 
-  const [submissions, setSubmissions] = useState<StudentProjectSubmission[]>(() => {
-    if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(SUBMISSIONS_STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSubmissions(parsed);
+          }
         }
       } catch (err) {
         console.error('Failed to load cached project submissions', err);
       }
     }
-    return [];
-  });
+  }, []);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 

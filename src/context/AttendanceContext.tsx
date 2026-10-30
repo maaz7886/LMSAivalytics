@@ -40,6 +40,7 @@ interface AttendanceContextType {
   markAllSessionStatus: (sessionId: string, status: AttendanceStatus) => Promise<void>;
   getStudentAttendance: (studentEmail: string) => StudentAttendanceStats;
   getSessionAttendance: (sessionId: string) => SessionAttendance;
+  deleteSession: (sessionId: string) => Promise<{ success: boolean; error?: string } | void>;
   overallInstitutionAttendance: number;
   refreshSessions: () => Promise<void>;
 }
@@ -104,35 +105,30 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { sendNotification } = useNotifications();
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // 1. Initial State from localStorage cache for immediate paint
-  const [sessions, setSessions] = useState<SessionItem[]>(() => {
+  // 1. Initial State starts empty on both server and client to guarantee identical initial render tree
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
+  const [attendances, setAttendances] = useState<Record<string, SessionAttendance>>({});
+
+  // Hydrate from localStorage on client mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const savedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY);
         if (savedSessions) {
           const parsed = JSON.parse(savedSessions);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSessions(parsed);
+          }
+        }
+        const savedAttendance = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
+        if (savedAttendance) {
+          setAttendances(JSON.parse(savedAttendance));
         }
       } catch (err) {
         console.error('Failed to load sessions from localStorage', err);
       }
     }
-    return [];
-  });
-
-  const [attendances, setAttendances] = useState<Record<string, SessionAttendance>>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedAttendance = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
-        if (savedAttendance) {
-          return JSON.parse(savedAttendance);
-        }
-      } catch (err) {
-        console.error('Failed to load attendance from localStorage', err);
-      }
-    }
-    return {};
-  });
+  }, []);
 
   // Cached learners list for session initialization
   const [dbLearners, setDbLearners] = useState<Array<{ id: string; fullName: string; email: string }>>([]);
@@ -726,6 +722,62 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         )
       : 88;
 
+  // Delete Session (Admin Action - Permanently deletes from all platform databases and state)
+  const deleteSession = useCallback(async (sessionId: string): Promise<{ success: boolean; error?: string }> => {
+    // 1. Optimistic removal from active state
+    setSessions((prev) => {
+      const updated = prev.filter((s) => s.id !== sessionId);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(updated));
+        } catch (e) {
+          console.error('Failed to sync updated sessions to localStorage', e);
+        }
+      }
+      return updated;
+    });
+
+    setAttendances((prev) => {
+      const copy = { ...prev };
+      delete copy[sessionId];
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(copy));
+        } catch (e) {
+          console.error('Failed to sync updated attendances to localStorage', e);
+        }
+      }
+      return copy;
+    });
+
+    // 2. Call backend Admin API route (uses Prisma superuser connection & Supabase Admin to bypass RLS)
+    try {
+      const res = await fetch(`/api/admin/sessions?id=${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.warn('API delete session response notice:', errorData);
+      }
+    } catch (apiErr) {
+      console.error('Error calling /api/admin/sessions DELETE:', apiErr);
+    }
+
+    // 3. Fallback / direct Supabase trigger for Realtime subscribers
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('AttendanceRecord').delete().eq('sessionId', sessionId);
+        await supabase.from('ClassSession').delete().eq('id', sessionId);
+      } catch (err) {
+        console.error('Error executing delete session transaction in Supabase:', err);
+      }
+    }
+
+    return { success: true };
+  }, []);
+
   return (
     <AttendanceContext.Provider
       value={{
@@ -739,6 +791,7 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         markAllSessionStatus,
         getStudentAttendance,
         getSessionAttendance,
+        deleteSession,
         overallInstitutionAttendance,
         refreshSessions: fetchSessionsFromDb,
       }}

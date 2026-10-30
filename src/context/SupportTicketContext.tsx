@@ -100,21 +100,25 @@ export const SupportTicketProvider: React.FC<{ children: React.ReactNode }> = ({
   const { sendNotification } = useNotifications();
   const [isLoading, setIsLoading] = useState(false);
 
-  // 1. Initial State from localStorage (guarantees NO loss on page refresh)
-  const [tickets, setTickets] = useState<SupportTicket[]>(() => {
+  // 1. Initial State starts empty on both server and client to guarantee identical initial render tree
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+
+  // Hydrate from localStorage on client mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem(TICKETS_STORAGE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTickets(parsed);
+          }
         }
       } catch (err) {
         console.error('Failed to parse cached tickets from localStorage', err);
       }
     }
-    return []; // Start empty — populated from Supabase DB
-  });
+  }, []);
 
   // Sync state to localStorage immediately whenever tickets change
   useEffect(() => {

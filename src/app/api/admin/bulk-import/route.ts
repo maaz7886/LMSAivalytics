@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { verifyAdminRequest } from '@/lib/auth/serverAuth';
 
 interface ImportStudentPayload {
   id?: string;
@@ -16,6 +17,15 @@ interface ImportStudentPayload {
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Enforce strict Admin authentication & role authorization
+    const authCheck = await verifyAdminRequest(req);
+    if (!authCheck.authorized) {
+      return NextResponse.json(
+        { success: false, error: authCheck.error },
+        { status: authCheck.status }
+      );
+    }
+
     const body = await req.json();
     const students: ImportStudentPayload[] = body.students || [];
 

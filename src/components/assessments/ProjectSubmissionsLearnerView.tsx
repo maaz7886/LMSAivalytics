@@ -30,6 +30,7 @@ import {
   RefreshCw,
   Send,
 } from 'lucide-react';
+import { isSafeUrl } from '@/lib/videoUtils';
 
 export const ProjectSubmissionsLearnerView: React.FC = () => {
   const { user } = useAuth();
@@ -410,18 +411,27 @@ export const ProjectSubmissionsLearnerView: React.FC = () => {
                                   </span>
                                 ))}
 
-                                {submission.links.map((link, lIdx) => (
-                                  <a
-                                    key={lIdx}
-                                    href={link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono bg-blue-50 border border-blue-200 text-blue-700 hover:underline"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                    <span className="max-w-xs truncate">{link}</span>
-                                  </a>
-                                ))}
+                                {submission.links.map((link, lIdx) => {
+                                  const safe = isSafeUrl(link);
+                                  return (
+                                    <a
+                                      key={lIdx}
+                                      href={safe ? link : '#'}
+                                      target={safe ? "_blank" : undefined}
+                                      rel={safe ? "noreferrer noopener" : undefined}
+                                      onClick={safe ? undefined : (e) => e.preventDefault()}
+                                      title={safe ? link : 'Untrusted or invalid link blocked for security'}
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono ${
+                                        safe
+                                          ? 'bg-blue-50 border border-blue-200 text-blue-700 hover:underline'
+                                          : 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed line-through'
+                                      }`}
+                                    >
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                      <span className="max-w-xs truncate">{link}</span>
+                                    </a>
+                                  );
+                                })}
                               </div>
 
                               {/* Student Notes */}

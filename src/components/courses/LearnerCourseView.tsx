@@ -45,21 +45,21 @@ export const LearnerCourseView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* ================= HERO CARD: AI-NATIVE PROJECT MANAGEMENT ================= */}
-      <div className="bg-gradient-to-br from-[#121614] via-[#1a2320] to-[#0e1713] text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-800 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-dark via-brand-dark-soft to-brand-dark text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-800 relative overflow-hidden">
         {/* Ambient background glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#3ECE92]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-mint/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-6">
           {/* Top badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#3ECE92]/20 text-[#3ECE92] border border-[#3ECE92]/30">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-mint/15 text-brand-mint border border-brand-mint/30">
               <Sparkles className="w-3.5 h-3.5" />
-              Flagship Program • {activeCourse.code}
+              Flagship Program: {activeCourse.code}
             </span>
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-medium bg-white/10 text-gray-300">
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300">
               3-Month Executive Curriculum
             </span>
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
               3 Professional Certifications
             </span>
           </div>
@@ -77,9 +77,9 @@ export const LearnerCourseView: React.FC = () => {
           {/* Progress Bar & Next Lesson Callout */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 max-w-3xl space-y-3 backdrop-blur-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2 font-mono font-semibold text-white">
+              <div className="flex items-center gap-2 font-semibold text-white">
                 <span>Program Progress</span>
-                <span className="text-[#3ECE92] font-bold text-sm">{courseProgress}%</span>
+                <span className="text-brand-mint font-bold text-sm font-mono">{courseProgress}%</span>
               </div>
               <div className="text-gray-400 font-mono text-[11px]">
                 {completedLessonsCount} of {totalLessons} syllabus units completed
@@ -89,7 +89,7 @@ export const LearnerCourseView: React.FC = () => {
             {/* Visual Bar */}
             <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#3ECE92] rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(62,206,146,0.5)]"
+                className="h-full bg-brand-mint rounded-full transition-transform duration-500 shadow-sm"
                 style={{ width: `${courseProgress}%` }}
               />
             </div>
@@ -98,7 +98,7 @@ export const LearnerCourseView: React.FC = () => {
             {nextLesson && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 text-xs border-t border-white/10">
                 <div className="flex items-center gap-2">
-                  <Play className="w-3.5 h-3.5 text-[#3ECE92] shrink-0" />
+                  <Play className="w-3.5 h-3.5 text-brand-mint shrink-0" />
                   <span className="text-gray-300">
                     <span className="text-gray-400 font-mono">Next:</span>{' '}
                     <strong className="text-white font-medium">Part {nextLesson.subpartCode}: {nextLesson.title}</strong>
@@ -107,7 +107,7 @@ export const LearnerCourseView: React.FC = () => {
 
                 <Link
                   href={`/courses/${activeCourse.id}?lesson=${nextLesson.id}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold text-[#111614] bg-[#3ECE92] hover:bg-[#34b780] shadow-md transition-all self-start sm:self-auto active:scale-95 shrink-0"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-brand-dark bg-brand-mint hover:bg-brand-mint-hover shadow-md transition-colors self-start sm:self-auto active:scale-95 shrink-0"
                 >
                   <span>Resume Learning</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -155,11 +155,11 @@ export const LearnerCourseView: React.FC = () => {
                 >
                   <div className="space-y-1.5 max-w-3xl">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-extrabold text-[#059669] bg-[#e8f8f0] px-2.5 py-0.5 rounded-md">
+                      <span className="text-xs font-bold text-brand-mint-text bg-brand-mint-light px-2.5 py-0.5 rounded-md">
                         Module {module.moduleNumber} ({module.weeks})
                       </span>
                       {module.certificationName && (
-                        <span className="text-xs text-gray-500 font-mono flex items-center gap-1">
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
                           <Award className="w-3.5 h-3.5 text-amber-500" />
                           {module.certificationName}
                         </span>
@@ -178,7 +178,7 @@ export const LearnerCourseView: React.FC = () => {
                       </div>
                       <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
                         <div
-                          className="h-full bg-[#059669] rounded-full transition-all"
+                          className="h-full bg-brand-mint-text rounded-full transition-colors"
                           style={{ width: `${modPercentage}%` }}
                         />
                       </div>
@@ -226,7 +226,7 @@ export const LearnerCourseView: React.FC = () => {
                               </h4>
 
                               <span className="text-[11px] font-mono text-gray-400 ml-1">
-                                • {subpart.duration}
+                                {subpart.duration}
                               </span>
                             </div>
 
@@ -240,7 +240,7 @@ export const LearnerCourseView: React.FC = () => {
                                 {subpart.takeaways.slice(0, 3).map((t, idx) => (
                                   <span
                                     key={idx}
-                                    className="text-[10px] font-mono text-gray-600 bg-white px-2 py-0.5 rounded border border-gray-200/60"
+                                    className="text-[10px] text-gray-600 bg-white px-2 py-0.5 rounded border border-gray-200/60"
                                   >
                                     {t}
                                   </span>
@@ -252,10 +252,10 @@ export const LearnerCourseView: React.FC = () => {
                           {/* Direct Launch Link */}
                           <Link
                             href={`/courses/${activeCourse.id}?lesson=${subpart.id}`}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all self-start md:self-center shrink-0 ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors self-start md:self-center shrink-0 ${
                               completed
                                 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
-                                : 'bg-[#121614] text-white hover:bg-black shadow-xs'
+                                : 'bg-brand-dark text-white hover:bg-black shadow-xs'
                             }`}
                           >
                             <Play className="w-3 h-3" />

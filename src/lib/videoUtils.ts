@@ -92,10 +92,30 @@ export function toYouTubeEmbedUrl(
 }
 
 /**
+ * Strictly verifies whether a URL is safe to use in an iframe, anchor tag, or navigation.
+ * Prevents javascript:, data:, vbscript:, and other dangerous URL schemes (Stored & Reflected XSS).
+ */
+export function isSafeUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  // Reject dangerous protocols
+  if (/^(javascript|data|vbscript|file):/i.test(trimmed)) {
+    return false;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    // Allow clean relative paths (e.g. /courses), reject protocol-relative (//evil.com)
+    return trimmed.startsWith('/') && !trimmed.startsWith('//');
+  }
+}
+
+/**
  * Analyzes any video URL and generates an embeddable URL.
  */
 export function getVideoEmbedInfo(url: string | null | undefined): VideoEmbedInfo {
-  if (!url || typeof url !== 'string') {
+  if (!url || typeof url !== 'string' || !isSafeUrl(url)) {
     return { embedUrl: '', provider: 'unknown', isValid: false };
   }
 
@@ -145,7 +165,7 @@ export function getVideoEmbedInfo(url: string | null | undefined): VideoEmbedInf
   }
 
   // 5. If it's already an embed URL (e.g. custom iframe embed)
-  if (trimmed.includes('/embed/') || trimmed.includes('player.')) {
+  if ((trimmed.includes('/embed/') || trimmed.includes('player.')) && isSafeUrl(trimmed)) {
     return {
       embedUrl: trimmed,
       provider: 'direct',

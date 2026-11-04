@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { verifyAdminRequest } from '@/lib/auth/serverAuth';
 
 export async function DELETE(req: NextRequest) {
   try {
+    // 0. Enforce strict Admin authentication & role authorization
+    const authCheck = await verifyAdminRequest(req);
+    if (!authCheck.authorized) {
+      return NextResponse.json(
+        { success: false, error: authCheck.error },
+        { status: authCheck.status }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     let sessionId = searchParams.get('id');
 

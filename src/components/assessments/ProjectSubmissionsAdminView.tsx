@@ -31,6 +31,7 @@ import {
   Edit2,
   ChevronRight,
 } from 'lucide-react';
+import { isSafeUrl } from '@/lib/videoUtils';
 
 export const ProjectSubmissionsAdminView: React.FC = () => {
   const {
@@ -433,18 +434,25 @@ export const ProjectSubmissionsAdminView: React.FC = () => {
                                 </span>
                               ))}
 
-                              {subm.links.map((l, i) => (
-                                <a
-                                  key={i}
-                                  href={l}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 hover:underline truncate"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                                  <span className="truncate">{l}</span>
-                                </a>
-                              ))}
+                              {subm.links.map((l, i) => {
+                                const safe = isSafeUrl(l);
+                                return (
+                                  <a
+                                    key={i}
+                                    href={safe ? l : '#'}
+                                    target={safe ? '_blank' : undefined}
+                                    rel="noopener noreferrer"
+                                    onClick={safe ? undefined : (e) => e.preventDefault()}
+                                    className={`inline-flex items-center gap-1 text-[11px] font-mono truncate ${
+                                      safe ? 'text-blue-600 hover:underline' : 'text-gray-400 cursor-not-allowed'
+                                    }`}
+                                    title={safe ? l : 'Untrusted or unsafe link scheme blocked'}
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="truncate">{l}</span>
+                                  </a>
+                                );
+                              })}
 
                               {subm.studentNotes && (
                                 <p className="text-[10px] text-gray-400 italic line-clamp-1 mt-0.5">
@@ -642,18 +650,25 @@ export const ProjectSubmissionsAdminView: React.FC = () => {
                     </div>
                   ))}
 
-                  {evaluatingSubmission.links.map((l, i) => (
-                    <a
-                      key={i}
-                      href={l}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1 text-[11px] font-mono text-blue-600 hover:underline"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>{l}</span>
-                    </a>
-                  ))}
+                  {evaluatingSubmission.links.map((l, i) => {
+                    const safe = isSafeUrl(l);
+                    return (
+                      <a
+                        key={i}
+                        href={safe ? l : '#'}
+                        target={safe ? "_blank" : undefined}
+                        rel={safe ? "noreferrer noopener" : undefined}
+                        onClick={safe ? undefined : (e) => e.preventDefault()}
+                        title={safe ? l : 'Untrusted or invalid link blocked for security'}
+                        className={`flex items-center gap-1 text-[11px] font-mono ${
+                          safe ? 'text-blue-600 hover:underline' : 'text-gray-400 cursor-not-allowed line-through'
+                        }`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>{l}</span>
+                      </a>
+                    );
+                  })}
                 </div>
 
                 {evaluatingSubmission.studentNotes && (

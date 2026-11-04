@@ -88,25 +88,25 @@ export default function AssessmentsPage() {
       <div className="space-y-6 max-w-7xl mx-auto pb-12">
         {/* Toast Feedback */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#121614] text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-800 flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300">
-            <div className="w-6 h-6 rounded-full bg-[#3ECE92]/20 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-[#3ECE92]" />
+          <div className="fixed bottom-6 right-6 z-50 bg-brand-dark text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-800 flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 motion-reduce:animate-none">
+            <div className="w-6 h-6 rounded-full bg-brand-mint/15 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-brand-mint" />
             </div>
             <span className="text-xs font-medium">{toastMessage}</span>
           </div>
         )}
 
         {/* Unified Assessment Section Header */}
-        <div className="bg-white rounded-2xl p-6 border border-[#eaedf0] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-border-subtle shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-[#e8f8f0] text-[#059669] border border-[#d1f4e2]">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-mint-light text-brand-mint-text border border-brand-mint/20">
                 <FileCheck className="w-3.5 h-3.5" />
-                Assessment Hub • AI-Native Project Management
+                Assessment Hub: AI-Native Project Management
               </span>
-              <span className="text-xs text-gray-400 font-mono">• 3 Professional Certifications</span>
+              <span className="text-xs text-gray-500 font-mono">3 Professional Certifications</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111614]">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-brand-dark">
               {isAdmin ? 'Assessment & Project Review Desk' : 'Assessments & Guided Project Submissions'}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -121,15 +121,15 @@ export default function AssessmentsPage() {
             <button
               onClick={() => setActiveSection('projects')}
               id="tab-guided-projects"
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
                 activeSection === 'projects'
                   ? 'bg-white text-gray-900 shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <FolderKanban className="w-4 h-4 text-[#3ECE92]" />
+              <FolderKanban className="w-4 h-4 text-brand-mint" />
               <span>Project Deliverables</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-[#e8f8f0] text-[#059669]">
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-brand-mint-light text-brand-mint-text">
                 {projectStats.totalSubparts} Parts
               </span>
             </button>
@@ -137,13 +137,13 @@ export default function AssessmentsPage() {
             <button
               onClick={() => setActiveSection('quizzes')}
               id="tab-milestone-quizzes"
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
                 activeSection === 'quizzes'
                   ? 'bg-white text-gray-900 shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <FileCheck className="w-4 h-4 text-[#3ECE92]" />
+              <FileCheck className="w-4 h-4 text-brand-mint" />
               <span>Milestone Quizzes</span>
               <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-gray-200 text-gray-700">
                 {quizzes.length} Tests

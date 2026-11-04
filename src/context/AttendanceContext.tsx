@@ -752,9 +752,16 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // 2. Call backend Admin API route (uses Prisma superuser connection & Supabase Admin to bypass RLS)
     try {
+      const { data: authSessionData } = await supabase.auth.getSession();
+      const accessToken = authSessionData?.session?.access_token;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
       const res = await fetch(`/api/admin/sessions?id=${encodeURIComponent(sessionId)}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
 
       if (!res.ok) {

@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <header className="sticky top-0 z-20 bg-[#f8faf9]/95 backdrop-blur-md border-b border-[#eaedf0] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+    <header className="sticky top-0 z-20 bg-canvas/95 backdrop-blur-md border-b border-border-subtle px-4 sm:px-8 py-3.5 flex items-center justify-between">
       {/* Mobile Hamburger & Search Bar */}
       <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-md">
         {/* Mobile Hamburger */}
@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-[#ebedec] transition-colors"
+            className="relative p-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
             aria-label="Notifications"
             title={`${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`}
           >

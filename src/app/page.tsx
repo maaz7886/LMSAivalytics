@@ -169,8 +169,8 @@ export default function DashboardPage() {
       <AppShell>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-3 border-[#3ECE92] border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-mono text-gray-400">Loading AIvalytics workspace...</p>
+            <div className="w-8 h-8 border-3 border-brand-mint border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-gray-500 font-medium">Loading AIvalytics workspace…</p>
           </div>
         </div>
       </AppShell>
@@ -186,7 +186,7 @@ export default function DashboardPage() {
           {/* Welcome Greeting & Date Range Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111614]">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-brand-dark">
                 Good to see you, {firstName}
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -198,7 +198,7 @@ export default function DashboardPage() {
             <div className="relative self-start sm:self-center">
               <button
                 onClick={() => setShowDatePicker(!showDatePicker)}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono font-medium text-gray-600 bg-white border border-[#eaedf0] hover:bg-gray-50 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-colors"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono font-medium text-gray-600 bg-white border border-border-subtle hover:bg-gray-50 shadow-xs transition-colors"
               >
                 <Calendar className="w-3.5 h-3.5 text-gray-400" />
                 <span>{selectedRange}</span>
@@ -206,7 +206,7 @@ export default function DashboardPage() {
               </button>
 
               {showDatePicker && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1.5 z-30 animate-in fade-in duration-100">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1.5 z-30 animate-in fade-in duration-100 motion-reduce:animate-none">
                   {dateRanges.map((range) => (
                     <button
                       key={range}
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                       }}
                       className={`w-full text-left px-3 py-2 text-xs rounded-lg font-mono transition-colors ${
                         selectedRange === range
-                          ? 'bg-[#e8f8f0] text-[#059669] font-semibold'
+                          ? 'bg-brand-mint-light text-brand-mint-text font-semibold'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
@@ -232,15 +232,15 @@ export default function DashboardPage() {
           {activeLiveSession && (
             <div
               id="live-lecture-dashboard-card"
-              className="bg-gradient-to-r from-[#121614] via-[#1a231f] to-[#121614] text-white rounded-3xl p-6 sm:p-7 border-2 border-[#3ECE92]/40 shadow-xl shadow-[#3ECE92]/10 relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-300"
+              className="bg-gradient-to-r from-brand-dark via-brand-dark-soft to-brand-dark text-white rounded-3xl p-6 sm:p-7 border border-brand-mint/40 shadow-xl shadow-brand-mint/10 relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-300 motion-reduce:animate-none"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#3ECE92]/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-mint/10 rounded-full blur-3xl pointer-events-none" />
               <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#3ECE92] text-[#111614] shadow-xs">
-                      <span className="w-2 h-2 rounded-full bg-[#111614] animate-ping" />
-                      <span>LIVE CLASSROOM IN SESSION</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-mint text-brand-dark shadow-xs">
+                      <span className="w-2 h-2 rounded-full bg-brand-dark animate-ping motion-reduce:animate-none" />
+                      <span>Live classroom in session</span>
                     </span>
                     <span className="text-xs font-mono text-gray-300 bg-white/10 px-2.5 py-0.5 rounded-full">
                       {activeLiveSession.course}
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                     {activeLiveSession.expiresAt && (
                       <span
                         suppressHydrationWarning
-                        className="text-xs font-mono text-[#3ECE92] font-semibold bg-[#3ECE92]/10 px-2.5 py-0.5 rounded-full"
+                        className="text-xs font-mono text-brand-mint font-semibold bg-brand-mint/15 px-2.5 py-0.5 rounded-full"
                       >
                         Ends in {Math.max(1, Math.round((parseDbTimestamp(activeLiveSession.expiresAt) - Date.now()) / 60000))}m
                       </span>
@@ -265,11 +265,11 @@ export default function DashboardPage() {
 
                   <div className="flex items-center gap-4 text-xs text-gray-400 font-mono pt-1">
                     <span className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-[#3ECE92]" />
+                      <Clock className="w-3.5 h-3.5 text-brand-mint" />
                       {activeLiveSession.time} ({activeLiveSession.duration || '60 mins'})
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-[#3ECE92]" />
+                      <User className="w-3.5 h-3.5 text-brand-mint" />
                       {activeLiveSession.instructor || 'Prof. Marcus Vance'}
                     </span>
                   </div>
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                       window.open(meetUrl, '_blank', 'noopener,noreferrer');
                     }}
                     id="student-dashboard-join-live-btn"
-                    className="bg-[#3ECE92] hover:bg-[#34be83] text-[#111614] font-bold px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all duration-200 flex items-center gap-2.5 shadow-lg shadow-[#3ECE92]/25 hover:scale-105 active:scale-95 cursor-pointer"
+                    className="bg-brand-mint hover:bg-brand-mint-hover text-brand-dark font-bold px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-transform duration-200 flex items-center gap-2.5 shadow-lg shadow-brand-mint/25 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                   >
                     <Video className="w-4 h-4 fill-current" />
                     <span>Join Live Google Meet</span>
@@ -294,17 +294,17 @@ export default function DashboardPage() {
           )}
 
           {/* Active Assessments & Project Submissions Callout Banner for Learners */}
-          <div className="bg-linear-to-r from-[#121614] to-[#1c221f] text-white rounded-2xl p-5 border border-gray-800 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-brand-dark to-brand-dark-soft text-white rounded-2xl p-5 border border-gray-800 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#3ECE92]/20 border border-[#3ECE92]/30 flex items-center justify-center shrink-0">
-                <FileCheck className="w-5 h-5 text-[#3ECE92]" />
+              <div className="w-10 h-10 rounded-xl bg-brand-mint/15 border border-brand-mint/30 flex items-center justify-center shrink-0">
+                <FileCheck className="w-5 h-5 text-brand-mint" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#3ECE92] text-[#111614] px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold bg-brand-mint text-brand-dark px-2.5 py-0.5 rounded-full">
                     Assessments & Projects
                   </span>
-                  <span className="text-xs text-gray-400 font-mono">• AI-Native Program</span>
+                  <span className="text-xs text-gray-400">AI-Native Program</span>
                 </div>
                 <h3 className="text-sm font-bold text-white mt-1">
                   Guided Project Deliverables & Milestone Quizzes
@@ -317,7 +317,7 @@ export default function DashboardPage() {
 
             <Link
               href="/assessments"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#111614] bg-[#3ECE92] hover:bg-[#34b780] shadow-sm transition-all active:scale-95 shrink-0 self-start sm:self-center"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-brand-dark bg-brand-mint hover:bg-brand-mint-hover shadow-xs transition-colors shrink-0 self-start sm:self-center"
             >
               <span>View Assessments</span>
               <ArrowRight className="w-3.5 h-3.5" />

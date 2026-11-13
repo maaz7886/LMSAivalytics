@@ -15,6 +15,7 @@ import {
   Check,
   AlertCircle,
   Save,
+  Trash2,
 } from 'lucide-react';
 
 interface AdminAttendanceModalProps {
@@ -22,6 +23,7 @@ interface AdminAttendanceModalProps {
   onClose: () => void;
   session: SessionItem | null;
   onSuccess?: (message: string) => void;
+  onDelete?: (session: SessionItem) => void;
 }
 
 export const AdminAttendanceModal: React.FC<AdminAttendanceModalProps> = ({
@@ -29,6 +31,7 @@ export const AdminAttendanceModal: React.FC<AdminAttendanceModalProps> = ({
   onClose,
   session,
   onSuccess,
+  onDelete,
 }) => {
   const { getSessionAttendance, updateSessionAttendance } = useAttendance();
 
@@ -299,9 +302,22 @@ export const AdminAttendanceModal: React.FC<AdminAttendanceModalProps> = ({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between shrink-0 bg-gray-50/50">
-          <span className="text-[11px] text-gray-500 font-mono">
-            {attendedCount} of {totalStudents} students marked present
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-gray-500 font-mono">
+              {attendedCount} of {totalStudents} students marked present
+            </span>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(session)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                title="Delete this session from all platform areas"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Session</span>
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2.5">
             <button

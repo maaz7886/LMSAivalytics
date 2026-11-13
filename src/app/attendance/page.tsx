@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAuth } from '@/context/AuthContext';
@@ -28,6 +29,7 @@ import {
   ShieldCheck,
   X,
   Eye,
+  Trash2,
 } from 'lucide-react';
 
 export default function AttendancePage() {
@@ -38,6 +40,7 @@ export default function AttendancePage() {
     attendances,
     addSession,
     createLecture,
+    deleteSession,
     getSessionAttendance,
     getStudentAttendance,
     overallInstitutionAttendance,
@@ -75,6 +78,28 @@ export default function AttendancePage() {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Delete Session state
+  const [sessionToDelete, setSessionToDelete] = useState<SessionItem | null>(null);
+  const [isDeletingSession, setIsDeletingSession] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!sessionToDelete) return;
+    try {
+      setIsDeletingSession(true);
+      await deleteSession(sessionToDelete.id);
+      showToast(`Session "${sessionToDelete.title}" deleted from all platform rosters.`);
+      if (selectedAttendanceSession?.id === sessionToDelete.id) {
+        setSelectedAttendanceSession(null);
+      }
+      setSessionToDelete(null);
+    } catch (err) {
+      console.error('Error deleting session:', err);
+      showToast('Failed to delete session. Please try again.');
+    } finally {
+      setIsDeletingSession(false);
+    }
+  };
 
   // Handle redirection from Dashboard (?action=schedule or ?session=sess_1)
   const initialUrlHandled = useRef(false);
@@ -163,7 +188,25 @@ export default function AttendancePage() {
   const markedSessionsCount = Object.values(attendances).length;
 
   if (!isAdmin) {
-    return null;
+    return (
+      <AppShell>
+        <div className="flex flex-col items-center justify-center min-h-[55vh] text-center p-6">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 border border-amber-100">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">Access Restricted</h2>
+          <p className="text-xs text-gray-500 mt-1 max-w-sm">
+            Attendance rosters and cohort tracking are restricted to authorized administrators. Redirecting...
+          </p>
+          <Link
+            href="/"
+            className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#121614] hover:bg-black transition-colors"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
@@ -496,6 +539,17 @@ export default function AttendancePage() {
                             <ExternalLink className="w-4 h-4" />
                           </a>
                         )}
+
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => setSessionToDelete(session)}
+                            className="p-2 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors border border-rose-200 hover:border-rose-300 shrink-0 cursor-pointer"
+                            title="Delete Session from all platform areas"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -803,7 +857,62 @@ export default function AttendancePage() {
           onClose={() => setSelectedAttendanceSession(null)}
           session={selectedAttendanceSession}
           onSuccess={(msg) => showToast(msg)}
+          onDelete={(sess) => {
+            setSelectedAttendanceSession(null);
+            setSessionToDelete(sess);
+          }}
         />
+
+        {/* Delete Session Confirmation Modal */}
+        {sessionToDelete && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-100 animate-in fade-in zoom-in-95">
+              <div className="flex items-center gap-3 pb-3 border-b border-gray-100 text-rose-600">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center border border-rose-100 shrink-0">
+                  <Trash2 className="w-5 h-5 text-rose-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Delete Lecture Session</h3>
+                  <p className="text-[11px] text-gray-400">Permanently removes session from all platform areas</p>
+                </div>
+              </div>
+
+              <div className="my-4 p-4 rounded-2xl bg-rose-50/60 border border-rose-100">
+                <p className="text-xs font-semibold text-gray-900">
+                  {sessionToDelete.title}
+                </p>
+                <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-1 font-mono">
+                  <span>{sessionToDelete.course}</span>
+                  <span>•</span>
+                  <span>{sessionToDelete.date}</span>
+                </div>
+                <p className="text-[11px] text-rose-700 mt-2 font-medium">
+                  ⚠️ This action cannot be undone. All associated attendance records and rosters will also be deleted from the database.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingSession}
+                  onClick={() => setSessionToDelete(null)}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingSession}
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{isDeletingSession ? 'Deleting...' : 'Delete Permanently'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppShell>
   );

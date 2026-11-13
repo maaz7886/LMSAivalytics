@@ -149,11 +149,19 @@ export const EnrollmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     try {
+      const { data: authSessionData } = await supabase.auth.getSession();
+      const accessToken = authSessionData?.session?.access_token;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
       const res = await fetch('/api/admin/bulk-import', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ students: newStudents }),
       });
 

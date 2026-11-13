@@ -425,9 +425,12 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteQuiz = async (quizId: string) => {
     setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
+    setAttempts((prev) => prev.filter((a) => a.quizId !== quizId));
 
     if (isSupabaseConfigured) {
       try {
+        await supabase.from('QuizQuestion').delete().eq('quizId', quizId);
+        await supabase.from('QuizAttempt').delete().eq('quizId', quizId);
         await supabase.from('Quiz').delete().eq('id', quizId);
       } catch (err) {
         console.error('Error deleting Quiz from DB:', err);

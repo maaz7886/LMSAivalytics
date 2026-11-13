@@ -105,47 +105,49 @@ const playNotificationChime = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
 
-  // Local broadcasts list (for admin broadcast history)
-  const [broadcasts, setBroadcasts] = useState<BroadcastNotification[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(BROADCASTS_STORAGE_KEY);
-        if (saved) return JSON.parse(saved);
-      } catch (err) {
-        console.error('Failed to load broadcasts from localStorage', err);
-      }
-    }
-    return [];
-  });
+  // Local broadcasts list (starts empty for identical initial SSR render tree)
+  const [broadcasts, setBroadcasts] = useState<BroadcastNotification[]>([]);
 
   // DB-synced notifications
   const [dbNotifications, setDbNotifications] = useState<LMSNotification[]>([]);
 
   // Read notifications set (notificationId -> boolean)
-  const [readIds, setReadIds] = useState<Record<string, boolean>>(() => {
+  const [readIds, setReadIds] = useState<Record<string, boolean>>({});
+
+  // Dismissed / Cancelled notifications set
+  const [dismissedIds, setDismissedIds] = useState<Record<string, boolean>>({});
+
+  // Hydrate from localStorage on client mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem(READ_NOTIFICATIONS_KEY);
-        if (saved) return JSON.parse(saved);
+        const savedBroadcasts = localStorage.getItem(BROADCASTS_STORAGE_KEY);
+        if (savedBroadcasts) {
+          setBroadcasts(JSON.parse(savedBroadcasts));
+        }
+      } catch (err) {
+        console.error('Failed to load broadcasts from localStorage', err);
+      }
+
+      try {
+        const savedRead = localStorage.getItem(READ_NOTIFICATIONS_KEY);
+        if (savedRead) {
+          setReadIds(JSON.parse(savedRead));
+        }
       } catch (err) {
         console.error('Failed to load read notifications from localStorage', err);
       }
-    }
-    return {};
-  });
 
-  // Dismissed / Cancelled notifications set
-  const [dismissedIds, setDismissedIds] = useState<Record<string, boolean>>(() => {
-    if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem(DISMISSED_NOTIFICATIONS_KEY);
-        if (saved) return JSON.parse(saved);
+        const savedDismissed = localStorage.getItem(DISMISSED_NOTIFICATIONS_KEY);
+        if (savedDismissed) {
+          setDismissedIds(JSON.parse(savedDismissed));
+        }
       } catch (err) {
         console.error('Failed to load dismissed notifications from localStorage', err);
       }
     }
-    return {};
-  });
+  }, []);
 
   // Active incoming alert for real-time pop-up notification
   const [activeAlert, setActiveAlert] = useState<LMSNotification | null>(null);
